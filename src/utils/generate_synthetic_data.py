@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import torch
 
+
+
 def generate_linear(n_samples=1500,dim=10):
     # Generate a dataset with 4-dimensional features and 1000 samples
     X = np.random.randn(n_samples, dim)
@@ -30,6 +32,8 @@ def generate_linear(n_samples=1500,dim=10):
     mu0 = torch.tensor(mu0,dtype=torch.float32)
     mu1 = torch.tensor(mu1,dtype=torch.float32)
     return X,t,y,y0,y1,mu0,mu1
+
+
 
 
 def generate_non_linear(n_samples=1500,dim=10):
