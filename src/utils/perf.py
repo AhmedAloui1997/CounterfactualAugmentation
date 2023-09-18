@@ -2,7 +2,7 @@
 
 import torch
 
-
+# the error in estimating the ITE and the ATE
 def perf_epehe_e_ate(mu_0,mu_1,ite_est):
     """
     Estimating the error in ATE and the precision of estimating heteregenous treatmente effects

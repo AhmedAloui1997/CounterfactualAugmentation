@@ -7,7 +7,14 @@
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LogisticRegression
+import torch
+from torch import nn
+from torch.optim import Adam
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
 
+
+# inmplementation of the causal forests method
 class X_Learner_RF:
 
     def __init__(self, random_state: int = 0):
@@ -32,6 +39,7 @@ class X_Learner_RF:
     def predict(self, X):
         return self.g.predict_proba(X)[:,0] * self.M3.predict(X) + self.g.predict_proba(X)[:,1] * self.M4.predict(X)
 
+# implementation of bart
 class X_Learner_BART(X_Learner_RF):
 
     def __init__(self, n_trees: int = 100, random_state: int = 0):
@@ -41,13 +49,6 @@ class X_Learner_BART(X_Learner_RF):
         self.M4 = RandomForestRegressor(n_estimators=n_trees, random_state=random_state)
         self.g = LogisticRegression(max_iter=2000, random_state=random_state)
 
-
-
-import torch
-from torch import nn
-from torch.optim import Adam
-from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression
 
 class Net(nn.Module):
     def __init__(self, input_size, hidden_size):

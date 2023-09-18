@@ -58,8 +58,8 @@ def upload_twins(data_folder, device):
     y0 = np.dot(twins_X.values, random_coeffs) + noise  # Linear combination of features for y0
     y1 = np.sin(np.dot(twins_X.values, random_coeffs)) + np.sqrt(np.sum(twins_X.values**2, axis=1)) + noise  # Non-linear combination for y1
 
-    mu0 = np.mean(np.dot(twins_X.values, random_coeffs)) 
-    mu1 = np.mean(np.sin(np.dot(twins_X.values, random_coeffs)) + np.sqrt(np.sum(twins_X.values**2, axis=1)))
+    mu0 = np.dot(twins_X.values, random_coeffs)
+    mu1 = np.sin(np.dot(twins_X.values, random_coeffs)) + np.sqrt(np.sum(twins_X.values**2, axis=1))
     # Determine the factual and counterfactual based on the treatment
     #treatment = np.random.binomial(1, 0.7, size=len(dataframe))
     treatment_probs = logistic(np.dot(twins_X, random_coeffs))
