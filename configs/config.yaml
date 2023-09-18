@@ -1,29 +1,23 @@
-data:
-  type: 'semi-synthetic'
-  synthetic: 'linear' #or non linear
-  semi-synthetic: 'ihdp' #the only semi-synthetic dataset in this repo
+# the possible dataset names are: ihdp, jobs, twins, linear, nonlinear
+dataset_name: "ihdp"
 
+# similarity measure: contrastive_learning, euclidean_distance, propensity_scores
+similarity_measure: "contrastive_learning"
 
-#configuration for the contrastive learning part
-contrastive_learning:
-  epsilon_contrastive: 0.1
-  input_dim_contrastive: 25
-  embedding_dim : 32
-  batch_size: 200
-  num_epochs : 50
-  learning_rate : !!float 1.0e-2
-  margin : 1.0
+# local regressor options: gp, linear
+local_regressor: "gp"
 
-data_augmentation:
-  gaussian_processes:
-    parameter1: 'value1'
-    parameter2: 'value2'
-  contrastive_learning:
-    parameter1: 'value1'
-    parameter2: 'value2'
+# Gaussian Process Kernel options: RBF, Matern, RationalQuadratic, ExpSineSquared, DotProduct
+gp_kernel: "RBF"
 
-model:
-  name: 'cfrnet'
-  tarnet:
-    parameter1: 'value1'
-    parameter2: 'value2'
+# distance threshold for similarity measure (in the embedding space, above this disstance the points are not used for imputation)
+distance_threshold: 0.1
+
+# the number of neighbors to consider for each point
+num_neighbors: 5
+
+# causal inference model options: xlearner, slearner, tlearner, cfrnet
+model_name: "xlearner"
+
+# the number of epochs for training the causal inference model
+num_epochs: 100
