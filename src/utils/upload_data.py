@@ -1,7 +1,7 @@
 import pandas as pd
 import torch
 from scipy.sparse import coo_matrix
-from generate_synthetic_data import *
+from src.utils.generate_synthetic_data import *
 
 # upload the ihdp data
 def upload_ihdp(dir):
@@ -125,16 +125,16 @@ def upload_news(dir_x, dir_y):
 # load the data 
 def load_data(dataset_name):
     # Depending on dataset_name, call appropriate data loading function
-    if dataset_name == "IHDP":
-        return upload_ihdp('data/ihdp/csv/ihdp_npci_2.csv')
+    if dataset_name == "ihdp":
+        return upload_ihdp('src/data/ihdp/ihdp_npci_2.csv')
     # Add other datasets similarly
-    elif dataset_name == "non-linear":
+    elif dataset_name == "nonlinear":
         return generate_non_linear()
     elif dataset_name == "linear":
         return generate_linear()
     elif dataset_name == "twins":
-        return upload_twins('data')
+        return upload_twins('src/data/twins')
     elif dataset_name == "news":
-        return upload_news('data/news/topic_doc_mean_n5000_k3477_seed_2.csv.x', 'data/news/topic_doc_mean_n5000_k3477_seed_2.csv.y')
+        return upload_news('src/data/news/topic_doc_mean_n5000_k3477_seed_2.csv.x', 'src/data/news/topic_doc_mean_n5000_k3477_seed_2.csv.y')
     else:
         raise ValueError("Dataset name not recognized.")

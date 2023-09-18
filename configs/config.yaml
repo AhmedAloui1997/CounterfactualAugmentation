@@ -2,8 +2,10 @@
 dataset_name: "ihdp"
 
 # similarity measure: contrastive_learning, euclidean_distance, propensity_scores
-similarity_measure: "contrastive_learning"
+similarity_measure: "contrastive"
 
+# if a contrastive learning model is trained
+contrastive_trained: 0
 # local regressor options: gp, linear
 local_regressor: "gp"
 
@@ -11,13 +13,17 @@ local_regressor: "gp"
 gp_kernel: "RBF"
 
 # distance threshold for similarity measure (in the embedding space, above this disstance the points are not used for imputation)
-distance_threshold: 0.1
+distance_threshold: 10
 
 # the number of neighbors to consider for each point
 num_neighbors: 5
 
-# causal inference model options: xlearner, slearner, tlearner, cfrnet
-model_name: "xlearner"
+# causal inference model options: bart, causal_forest, slearner, tlearner, cfrnet
+model_name: "bart"
 
 # the number of epochs for training the causal inference model
 num_epochs: 100
+
+params:
+  num_neighbors: 5                           
+  distance_threshold: 1.0 

@@ -1,7 +1,7 @@
 import torch
 import numpy as np
-from contrastive_learning import *
-from CounterfactualAugmentation.src.data_augmentation.local_regressor import *
+from src.data_augmentation.contrastive_learning import *
+from src.data_augmentation.local_regressor import *
 from sklearn.linear_model import LogisticRegression
 
 
@@ -16,13 +16,13 @@ class SimilarityMeasures:
             if contrastive_trained == 0:
                 # train the contrastive learning model
                 # hyperparameters for the contrastive learning model
-                batch_size = 200
-                epsilon = 0.1
+                batch_size = 100
+                epsilon = 0.5
                 input_dim =25
-                embedding_dim = 32
+                embedding_dim = 16
                 batch_size = 200
                 num_epochs = 100
-                learning_rate = 1e-2
+                learning_rate = 1e-3
                 margin = 1.0   
                 model = train_model(X, T, Y, epsilon, input_dim, embedding_dim, batch_size, num_epochs, learning_rate, margin)        
                 embeddings = model(X)

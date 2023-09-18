@@ -14,7 +14,9 @@ def perf_epehe_e_ate(mu_0,mu_1,ite_est):
     ite_est: the estimated value of the ITE
     
     """
-    
+    mu_1 = torch.tensor(mu_1,dtype=torch.float32)
+    mu_0 = torch.tensor(mu_0,dtype=torch.float32)
+    ite_est = torch.tensor(ite_est,dtype=torch.float32)
     e_pehe = torch.sqrt(torch.mean((mu_1-mu_0-ite_est)**2))
     e_ate = torch.abs(torch.mean(mu_1-mu_0) - torch.mean(ite_est))
     return e_pehe,e_ate

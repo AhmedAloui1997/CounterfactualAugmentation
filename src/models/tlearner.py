@@ -1,64 +1,62 @@
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-from utils.losses import *
 import tqdm
 import torch.optim as optim
 
 class TLearner(nn.Module):
-  def __init__(self, input_dim, output_dim,hyp_dim=100):
-    '''
-    input_dim: dimension of the input features, treatment is not considered to be a feature 
-    output_dim: dimension of the output data, each potential outcome
-    hyp_dim: dimension of the hypothese layers for each potential outcome
-    '''
-    super().__init__()
+    def __init__(self, input_dim, output_dim, hyp_dim=100):
+        super().__init__()
 
-    #Potential outcome y0
-    func0 = [nn.Linear(input_dim,hyp_dim),nn.ReLU(),nn.Linear(hyp_dim, hyp_dim),nn.ReLU(),nn.Linear(hyp_dim, output_dim)]
-    self.func0 = nn.Sequential(*func0)
-    #potential outcome y1
-    func1 = [nn.Linear(input_dim,hyp_dim),nn.ReLU(),nn.Linear(hyp_dim, hyp_dim),nn.ReLU(),nn.Linear(hyp_dim, output_dim)]
-    self.func1 = nn.Sequential(*func1)
-    #add batch normalization
-    
-  def forward(self,X):
-  
-    
-    # Pass the transformed features through potential outcomes predicting networks
-    Y0 = self.func0(X)
-    Y1 = self.func1(X)
+        # Potential outcome y0
+        func0 = [nn.Linear(input_dim, hyp_dim),
+                 nn.ReLU(),
+                 nn.Linear(hyp_dim, hyp_dim),
+                 nn.ReLU(),
+                 nn.Linear(hyp_dim, output_dim)]
+        self.func0 = nn.Sequential(*func0)
 
-    return Y0, Y1
-  
-  def predict(self,X):
-    # no gradient computation
-    with torch.no_grad():
-      Y0 = self.func0(X)
-      Y1 = self.func1(X)
-    return Y1 - Y0
+        # Potential outcome y1
+        func1 = [nn.Linear(input_dim, hyp_dim),
+                 nn.ReLU(),
+                 nn.Linear(hyp_dim, hyp_dim),
+                 nn.ReLU(),
+                 nn.Linear(hyp_dim, output_dim)]
+        self.func1 = nn.Sequential(*func1)
+        # Add batch normalization (you mentioned it, but didn't include in the model)
 
-  def fit(net, data,epochs=500, batch=256, lr=1e-3, decay=0):
-    tqdm_epoch = tqdm.trange(epochs)
-    optimizer = optim.Adam(net.parameters(), lr=lr,weight_decay=decay)
-    mse = nn.MSELoss()
+    def forward(self, X):
+        Y0 = self.func0(X)
+        Y1 = self.func1(X)
+        return Y0, Y1
 
-    #u = torch.mean(t)
-    dim = data.shape[1]-2
-    wt = 1.0
-    wc = 1.0
-    loader = DataLoader(data, batch_size=batch, shuffle=True)
-    for _ in tqdm_epoch:
-      for tr in loader:
-          train_t = tr[:,dim]
-          train_X = tr[:,0:dim]      
-          train_y = tr[:,dim+1:dim+2]
-          train_Y0 = train_y[train_t==0]
-          train_Y1 = train_y[train_t==1]
-          y0, y1 = net(train_X)
-          optimizer.zero_grad()
-          loss = wc * mse(y0[train_t==0],train_Y0) + wt * mse(y1[train_t==1],train_Y1) 
-          loss.backward()
-          optimizer.step()
-      tqdm_epoch.set_description('Total Loss: {:3f} --- FL0 = {:3f}, FL1 = {:3f}'.format(loss.cpu().detach().numpy(),mse(y0[train_t==0],train_Y0).cpu().detach().numpy(),mse(y1[train_t==1],train_Y1).cpu().detach().numpy()))
-    return net
+    def predict(self, X):
+        X_tensor = torch.from_numpy(X).float()
+        with torch.no_grad():
+            Y0, Y1 = self(X_tensor)
+        return (Y1 - Y0).numpy()
+
+    def fit(self, X, treatment, y_factual, epochs=500, batch=256, lr=1e-3, decay=0):
+        X_tensor = torch.from_numpy(X).float()
+        treatment_tensor = torch.from_numpy(treatment).float()
+        y_factual_tensor = torch.from_numpy(y_factual).float()
+
+        dataset = torch.utils.data.TensorDataset(X_tensor, treatment_tensor, y_factual_tensor)
+        loader = DataLoader(dataset, batch_size=batch, shuffle=True)
+
+        optimizer = optim.Adam(self.parameters(), lr=lr, weight_decay=decay)
+        mse = nn.MSELoss()
+
+        tqdm_epoch = tqdm.trange(epochs)
+        for _ in tqdm_epoch:
+            for (batch_X, batch_t, batch_y) in loader:
+                y0, y1 = self(batch_X)
+                optimizer.zero_grad()
+                loss = (mse(y0[batch_t == 0], batch_y[batch_t == 0]) + 
+                        mse(y1[batch_t == 1], batch_y[batch_t == 1]))
+                loss.backward()
+                optimizer.step()
+            tqdm_epoch.set_description(
+                'Total Loss: {:3f}'.format(loss.item())
+            )
+        return self

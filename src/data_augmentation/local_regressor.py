@@ -5,7 +5,14 @@ from sklearn.neighbors import NearestNeighbors
 from sklearn.linear_model import LinearRegression
 import torch
 
-def impute_missing_values_embeddings(embeddings, data, k=5, distance_threshold=1.0, local_regressor="gp", gp_kernel="RBF"):
+def impute_missing_values_embeddings(embeddings, data_factual, k=5, distance_threshold=1.0, local_regressor="gp", gp_kernel="RBF"):
+    # put none for the non observed potential outcomes
+    data = np.column_stack((data_factual[:,:-1], np.nan * np.ones(data_factual.shape[0]), np.nan * np.ones(data_factual.shape[0])))
+    for i in range(data.shape[0]):
+        if data[i,-3] == 1:
+            data[i,-1] = data_factual[i,-1]
+        else:
+            data[i,-2] = data_factual[i,-1]
     imputed_data = data.copy()
     X = data[:, :-3]
     X_embeddings = embeddings.detach().numpy()
@@ -58,7 +65,7 @@ def impute_missing_values_embeddings(embeddings, data, k=5, distance_threshold=1
 
 #this function will output the imputed data into a data with only the new imputed factual outcomes.
 def data_preprocessing(dataset,imputed_data):  
-  rows = dataset.numpy()
+  rows = dataset
   for row in imputed_data:
       x = row[:-3]
       t, y1, y0 = row[-3:]
