@@ -1,7 +1,7 @@
 import pandas as pd
 import torch
-
-
+from scipy.sparse import coo_matrix
+from generate_synthetic_data import *
 
 
 def upload_ihdp(dir,device):
@@ -27,11 +27,58 @@ def upload_ihdp(dir,device):
     return ihdp_X,ihdp_t,ihdp_y,ihdp_y0,ihdp_y1,ihdp_mu0,ihdp_mu1
 
 
+# logistic function that we will need for the twins data
+def logistic(z):
+    return 1 / (1 + np.exp(-z))
+    
+# upload the twins data
+def upload_twins(data_folder, device):
+    # Read CSVs
+    twins_X_path = f'{data_folder}/twins/twin_pairs_X_3years_samesex.csv'
+    twins_T_path = f'{data_folder}/twins/twin_pairs_T_3years_samesex.csv'
+    twins_Y_path = f'{data_folder}/twins/twin_pairs_Y_3years_samesex.csv'
+    
+    twins_X = pd.read_csv(twins_X_path)
+    twins_T = pd.read_csv(twins_T_path)
+    twins_Y = pd.read_csv(twins_Y_path)
 
-import pandas as pd
-import torch
-from scipy.sparse import coo_matrix
+    # Pre-processing
+    col = ['meduc6','data_year', 'nprevistq', 'dfageq', 'feduc6','infant_id_0','infant_id_1','dlivord_min','dtotord_min','bord_0','bord_1']
+    twins_X = twins_X.drop(col, axis=1)
+    twins_T = twins_T.drop('Unnamed: 0', axis=1)
+    twins_Y = twins_Y.drop('Unnamed: 0', axis=1)
+    dataframe = pd.concat([twins_X, twins_T, twins_Y], axis=1)
+    dataframe = dataframe.drop(['Unnamed: 0', 'Unnamed: 0.1'], axis=1)
+    dataframe = dataframe.dropna(axis=0, how='any')
+    dataframe = dataframe.reset_index(drop=True)
 
+    # Generate potential outcomes
+    noise = np.random.normal(0, 0.1, len(dataframe))
+    random_coeffs = np.random.rand(twins_X.shape[1])
+    y0 = np.dot(twins_X.values, random_coeffs) + noise  # Linear combination of features for y0
+    y1 = np.sin(np.dot(twins_X.values, random_coeffs)) + np.sqrt(np.sum(twins_X.values**2, axis=1)) + noise  # Non-linear combination for y1
+
+    mu0 = np.mean(np.dot(twins_X.values, random_coeffs)) 
+    mu1 = np.mean(np.sin(np.dot(twins_X.values, random_coeffs)) + np.sqrt(np.sum(twins_X.values**2, axis=1)))
+    # Determine the factual and counterfactual based on the treatment
+    #treatment = np.random.binomial(1, 0.7, size=len(dataframe))
+    treatment_probs = logistic(np.dot(twins_X, random_coeffs))
+    treatment = np.random.binomial(1, treatment_probs, size=len(dataframe))
+    y_factual = np.where(treatment == 1, y1, y0)
+    #y_cfactual = np.where(treatment == 1, y0, y1)
+
+    # Convert to PyTorch tensors
+    data_x_tensor = torch.tensor(twins_X.values, dtype=torch.float32, device=device)
+    treatment_tensor = torch.tensor(treatment, dtype=torch.float32, device=device).reshape(-1)
+    y_factual_tensor = torch.tensor(y_factual, dtype=torch.float32, device=device).reshape(-1)
+    y0_tensor = torch.tensor(y0, dtype=torch.float32, device=device)
+    y1_tensor = torch.tensor(y1, dtype=torch.float32, device=device)
+
+    return data_x_tensor, treatment_tensor, y_factual_tensor, y0_tensor, y1_tensor,mu0,mu1
+
+
+
+# upload the news data
 def upload_news(dir_x, dir_y, device):
     # Read .y file directly as pandas DataFrame
     names_y = ['treatment', 'y_factual', 'y_cfactual', 'mu0', 'mu1']
@@ -72,3 +119,20 @@ def upload_news(dir_x, dir_y, device):
     y0[treatment == 0] = y_factual[treatment == 0]
 
     return X, treatment, y_factual, y0, y1, mu0, mu1
+
+# load the data 
+def load_data(dataset_name):
+    # Depending on dataset_name, call appropriate data loading function
+    if dataset_name == "IHDP":
+        return upload_ihdp('path_to_ihdp')
+    # Add other datasets similarly
+    elif dataset_name == "non-linear":
+        return generate_non_linear()
+    elif dataset_name == "linear":
+        return generate_linear()
+    elif dataset_name == "twins":
+        return upload_twins()
+    elif dataset_name == "news":
+        return upload_news()
+    else:
+        raise ValueError("Dataset name not recognized.")
