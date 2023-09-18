@@ -3,18 +3,18 @@ import torch
 from scipy.sparse import coo_matrix
 from generate_synthetic_data import *
 
-
-def upload_ihdp(dir,device):
+# upload the ihdp data
+def upload_ihdp(dir):
     # IHDP
     names=['treatment', 'y_factual', 'y_cfactual', 'mu0', 'mu1', 'x1','x2','x3','x4','x5','x6','x7','x8','x9','x10','x11','x12','x13','x14','x15','x16','x17','x18','x19','x20','x21','x22','x23','x24','x25']
     features_ihdp = ['x1','x2','x3','x4','x5','x6','x7','x8','x9','x10','x11','x12','x13','x14','x15','x16','x17','x18','x19','x20','x21','x22','x23','x24','x25']
     ihdp = pd.read_csv(dir,header=0,names=names)
-    ihdp_t = torch.tensor(ihdp['treatment'].values,dtype=torch.float32,device =device)
-    ihdp_y = torch.tensor(ihdp['y_factual'].values,dtype=torch.float32,device = device)
-    ihdp_ycf = torch.tensor(ihdp['y_cfactual'].values,dtype=torch.float32,device= device)
-    ihdp_mu0 = torch.tensor(ihdp['mu0'].values,dtype=torch.float32, device= device)
-    ihdp_mu1 = torch.tensor(ihdp['mu1'].values,dtype=torch.float32, device=device)
-    ihdp_X = torch.tensor(ihdp[features_ihdp].values,dtype=torch.float32,device=device)
+    ihdp_t = torch.tensor(ihdp['treatment'].values,dtype=torch.float32)
+    ihdp_y = torch.tensor(ihdp['y_factual'].values,dtype=torch.float32)
+    ihdp_ycf = torch.tensor(ihdp['y_cfactual'].values,dtype=torch.float32)
+    ihdp_mu0 = torch.tensor(ihdp['mu0'].values,dtype=torch.float32)
+    ihdp_mu1 = torch.tensor(ihdp['mu1'].values,dtype=torch.float32)
+    ihdp_X = torch.tensor(ihdp[features_ihdp].values,dtype=torch.float32)
 
 
     ihdp_y1 = torch.zeros_like(ihdp_y)
@@ -79,7 +79,7 @@ def upload_twins(data_folder, device):
 
 
 # upload the news data
-def upload_news(dir_x, dir_y, device):
+def upload_news(dir_x, dir_y):
     # Read .y file directly as pandas DataFrame
     names_y = ['treatment', 'y_factual', 'y_cfactual', 'mu0', 'mu1']
     y_data = pd.read_csv(dir_y, header=0, names=names_y)
@@ -102,12 +102,12 @@ def upload_news(dir_x, dir_y, device):
     x_data = x_sparse.todense()
 
     # Convert data to torch tensors
-    treatment = torch.tensor(y_data['treatment'].values, dtype=torch.float32, device=device)
-    y_factual = torch.tensor(y_data['y_factual'].values, dtype=torch.float32, device=device)
-    y_cfactual = torch.tensor(y_data['y_cfactual'].values, dtype=torch.float32, device=device)
-    mu0 = torch.tensor(y_data['mu0'].values, dtype=torch.float32, device=device)
-    mu1 = torch.tensor(y_data['mu1'].values, dtype=torch.float32, device=device)
-    X = torch.tensor(x_data, dtype=torch.float32, device=device)
+    treatment = torch.tensor(y_data['treatment'].values, dtype=torch.float32)
+    y_factual = torch.tensor(y_data['y_factual'].values, dtype=torch.float32)
+    y_cfactual = torch.tensor(y_data['y_cfactual'].values, dtype=torch.float32)
+    mu0 = torch.tensor(y_data['mu0'].values, dtype=torch.float32)
+    mu1 = torch.tensor(y_data['mu1'].values, dtype=torch.float32)
+    X = torch.tensor(x_data, dtype=torch.float32)
 
     # Calculate y0 and y1 similar to IHDP
     y1 = torch.zeros_like(y_factual)
@@ -120,19 +120,21 @@ def upload_news(dir_x, dir_y, device):
 
     return X, treatment, y_factual, y0, y1, mu0, mu1
 
+
+
 # load the data 
 def load_data(dataset_name):
     # Depending on dataset_name, call appropriate data loading function
     if dataset_name == "IHDP":
-        return upload_ihdp('path_to_ihdp')
+        return upload_ihdp('data/ihdp/csv/ihdp_npci_2.csv')
     # Add other datasets similarly
     elif dataset_name == "non-linear":
         return generate_non_linear()
     elif dataset_name == "linear":
         return generate_linear()
     elif dataset_name == "twins":
-        return upload_twins()
+        return upload_twins('data')
     elif dataset_name == "news":
-        return upload_news()
+        return upload_news('data/news/topic_doc_mean_n5000_k3477_seed_2.csv.x', 'data/news/topic_doc_mean_n5000_k3477_seed_2.csv.y')
     else:
         raise ValueError("Dataset name not recognized.")

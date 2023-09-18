@@ -5,7 +5,7 @@ from torch.utils.data import Dataset, DataLoader
 import numpy as np
 
 class CustomDataset(Dataset):
-    def __init__(self, X, T, Y, epsilon):
+    def __init__(self, X, T, Y, epsilon=0.01):
         self.X = X
         self.T = T
         self.Y = Y
