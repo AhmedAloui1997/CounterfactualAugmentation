@@ -13,13 +13,14 @@ class SimilarityMeasures:
     # the compute similarity class with return the embeddings of the X data
     def compute_similarity(self,X,T,Y,epsilon=0.01,contrastive_trained=0,model_path='model.pt'):
         if self.measure_type == 'contrastive':
+            input_dim = X.shape[1]
+            embedding_dim = 16
             if contrastive_trained == 0:
                 # train the contrastive learning model
                 # hyperparameters for the contrastive learning model
                 batch_size = 100
                 epsilon = 0.5
-                input_dim =25
-                embedding_dim = 16
+                
                 batch_size = 200
                 num_epochs = 100
                 learning_rate = 1e-3
@@ -31,7 +32,7 @@ class SimilarityMeasures:
                 return embeddings
             else:
                 # load the trained model
-                model = ContrastiveLearningModel(X.shape[1],32)
+                model = ContrastiveLearningModel(input_dim, embedding_dim)
                 model.load_state_dict(torch.load(model_path))
                 print("Model loaded")
                 embeddings = model(X)

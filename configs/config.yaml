@@ -1,7 +1,7 @@
-# the possible dataset names are: ihdp, jobs, twins, linear, nonlinear
-dataset_name: "ihdp"
+# the possible dataset names are: ihdp, news, twins, linear, nonlinear
+dataset_name: "news"
 
-# similarity measure: contrastive_learning, euclidean_distance, propensity_scores
+# similarity measure: contrastive, euclidean_distance, propensity_scores
 similarity_measure: "contrastive"
 
 # if a contrastive learning model is trained
@@ -13,7 +13,7 @@ local_regressor: "gp"
 gp_kernel: "RBF"
 
 # distance threshold for similarity measure (in the embedding space, above this disstance the points are not used for imputation)
-distance_threshold: 10
+distance_threshold: 0.1
 
 # the number of neighbors to consider for each point
 num_neighbors: 5
@@ -25,5 +25,5 @@ model_name: "bart"
 num_epochs: 100
 
 params:
-  num_neighbors: 5                           
-  distance_threshold: 1.0 
+  num_neighbors: 10                           
+  distance_threshold: 0.2

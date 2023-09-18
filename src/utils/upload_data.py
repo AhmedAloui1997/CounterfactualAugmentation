@@ -117,6 +117,11 @@ def upload_news(dir_x, dir_y):
     y0 = torch.zeros_like(y_factual)
     y0[treatment == 1] = y_cfactual[treatment == 1]
     y0[treatment == 0] = y_factual[treatment == 0]
+   
+
+    # this is temporary way of solving a problem with the data
+    X = X[:-1]
+
 
     return X, treatment, y_factual, y0, y1, mu0, mu1
 
@@ -126,7 +131,7 @@ def upload_news(dir_x, dir_y):
 def load_data(dataset_name):
     # Depending on dataset_name, call appropriate data loading function
     if dataset_name == "ihdp":
-        return upload_ihdp('src/data/ihdp/ihdp_npci_2.csv')
+        return upload_ihdp('src/data/ihdp/ihdp_npci_6.csv')
     # Add other datasets similarly
     elif dataset_name == "nonlinear":
         return generate_non_linear()

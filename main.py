@@ -20,6 +20,8 @@ from src.data_augmentation import contrastive_learning
 from src.data_augmentation import similarity_measure
 from src.data_augmentation import local_regressor
 
+from sklearn.model_selection import train_test_split
+
 
 # Seed for reproducibility
 np.random.seed(2023)
@@ -38,6 +40,11 @@ def main():
     params = config['params']
     X, treatment, y_factual, y0,y1, mu0, mu1 = load_data(dataset_name)
 
+    # Split into training and test sets
+    X_train, X_test, treatment_train, treatment_test, y_factual_train, y_factual_test, y0_train, y0_test, y1_train, y1_test, mu0_train, mu0_test, mu1_train, mu1_test = train_test_split(
+        X, treatment, y_factual, y0, y1, mu0, mu1, test_size=0.2, random_state=42)  # 20% of the data as the test set
+
+
 
     # Data Augmentation
     similarity = config['similarity_measure']
@@ -46,21 +53,25 @@ def main():
     contrastive_trained = config['contrastive_trained']
 
     sim_measure = similarity_measure.SimilarityMeasures(similarity)
-    embeddings = sim_measure.compute_similarity(X,treatment,y_factual,contrastive_trained=contrastive_trained)
+    # add the dataeset name to the model path
+    model_path = 'model_{}.pt'.format(dataset_name)
+    embeddings = sim_measure.compute_similarity(X_train,treatment_train,y_factual_train,contrastive_trained=contrastive_trained,model_path=model_path)
     
     # impute the data
     imputed_data = impute_missing_values_embeddings(embeddings, 
-                                                    np.column_stack((X, treatment, y_factual)), 
+                                                    np.column_stack((X_train, treatment_train, y_factual_train)), 
                                                     k = params['num_neighbors'],
                                                     distance_threshold = params['distance_threshold'],
                                                     local_regressor=local_regressor, 
                                                     gp_kernel=gp_kernel)
     
-    dataset = np.column_stack((X, treatment, y_factual))
+    dataset = np.column_stack((X_train, treatment_train, y_factual_train))
     print(dataset.shape)
     print(imputed_data.shape)
 
     imputed_data = data_preprocessing(dataset,imputed_data)
+    print("After preprocessing, the shape of the data is: ")
+    print(imputed_data.shape)
 
     # Extract Augmented Data
     X_augmented = imputed_data[:, :-2]
@@ -74,25 +85,29 @@ def main():
         model.fit(X_augmented.cpu().numpy(), treatment_augmented.cpu().numpy(), y_factual_augmented.cpu().numpy())
     elif model_name == 'bart':
         # check if cpu is necessary (I think u can do everything directly on gpu)
-        model = X_Learner_BART(n_trees=10, random_state=2)
+        model = X_Learner_BART(n_trees=100, random_state=2)
         model.fit(X_augmented.cpu().numpy(), treatment_augmented.cpu().numpy(), y_factual_augmented.cpu().numpy())
     elif model_name == 'slearner':
         # to fill
         model = SLearner()
     elif model_name == 'cfrnet':
         # to fill
-        model = CFR()
+        model = CFR(input_dim=X.shape[1], output_dim=1)
+        model.fit(X_augmented, treatment_augmented, y_factual_augmented)
     elif model_name == 'tlearner':
         # to fill
         model = TLearner()
     else:
         raise ValueError("Unsupported model type")
 
-    ite_pred = model.predict(X)
+    # test the peroforamnce of the model on the test data
+    ite_pred_test = model.predict(X_test)
 
-    results = perf_epehe_e_ate(mu0,mu1, ite_pred)
+    #results = perf_epehe_e_ate(mu0,mu1, ite_pred)
+    results_test = perf_epehe_e_ate(mu0_test, mu1_test, ite_pred_test)
+
     print(f"Results for model {model_name}:")
-    print(results)
+    print(results_test)
 
 if __name__ == "__main__":
     main()

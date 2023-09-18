@@ -31,11 +31,11 @@ class CFRLoss(_Loss):
     
     def forward(self, prediction1: torch.Tensor, prediction0: torch.Tensor, target1: torch.Tensor, target0: torch.Tensor,
                 Treatment: torch.Tensor, phi_output: torch.Tensor) -> torch.Tensor:
-      
+        Treatment = torch.tensor(Treatment, dtype=torch.float32)
         w1 = 1.0/(2*torch.mean(Treatment)) 
         w0 = 1.0/(2*(1-torch.mean(Treatment)))
         mse = MSELoss()
         phi0, phi1 = phi_output[Treatment==0], phi_output[Treatment==1]
         factual_err = w0 * mse(prediction0[Treatment==0],target0) + w1 *  mse(prediction1[Treatment==1],target1)
-        #imbalance_term = self.ipm_metric[self.metric](phi0, phi1)
-        return factual_err #+ self.alpha*imbalance_term
+        imbalance_term = self.ipm_metric[self.metric](phi0, phi1)
+        return factual_err + self.alpha*imbalance_term

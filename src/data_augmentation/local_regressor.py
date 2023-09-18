@@ -39,7 +39,7 @@ def impute_missing_values_embeddings(embeddings, data_factual, k=5, distance_thr
             else:
                 raise ValueError("Unsupported kernel type")
             
-            regressor = GaussianProcessRegressor(kernel=kernel, alpha=0.0)
+            regressor = GaussianProcessRegressor(kernel=kernel, alpha=1e-2)
         elif local_regressor == "linear":
             regressor = LinearRegression()
         else:
