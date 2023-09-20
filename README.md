@@ -70,4 +70,16 @@ model_name: "causal_forest"
 
 ---
 
-Feel free to raise an issue or contribute to enhance the functionalities of this project.
+### Datasets
+
+We use variaous synthetic and semi-synthetic datasets to test our proposed approach:
+
+- IHDP: - Fill in a short description with links
+- News: - Fill in a short description with links
+- Twins: - Fill in a short description with links
+- Linear: - Fill in a short description with links
+- Non Linear: - Fill in a short description with links
+
+
+
+Feel free to raise an issue, contribute to enhance the functionalities of this project, copy parts of this project for your personal projects.

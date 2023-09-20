@@ -6,7 +6,7 @@ import tqdm
 import torch.optim as optim
 
 class CFR(nn.Module):
-    def __init__(self, input_dim, output_dim, rep_dim=200, hyp_dim=100):
+    def __init__(self, input_dim, output_dim, rep_dim=800, hyp_dim=400):
         super(CFR, self).__init__()
 
         # Representation layer
@@ -43,7 +43,10 @@ class CFR(nn.Module):
         Y1 = self.func1(Phi)
         return Phi, Y0, Y1
 
-    def fit(self, X, treatment, y_factual, epochs=1000, batch=128, lr=1e-3, decay=0, alpha=3, metric="W1"):
+    def fit(self, X, treatment, y_factual, epochs=100, batch=128, lr=1e-3, decay=0, alpha=3, metric="W1"):
+
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.to(device) # Move model to GPU if CUDA is available
         data = torch.cat((X, treatment.unsqueeze(-1), y_factual.unsqueeze(-1)), dim=1)
         dim = data.shape[1] - 2
         cfr_loss = CFRLoss(alpha=alpha, metric=metric)
@@ -54,6 +57,7 @@ class CFR(nn.Module):
         
         for _ in tqdm_epoch:
             for tr in loader:
+                tr = tr.to(device)
                 train_t = tr[:, dim].int()
                 train_X = tr[:, 0:dim]
                 train_y = tr[:, dim + 1:dim + 2]
@@ -71,6 +75,8 @@ class CFR(nn.Module):
         return self
 
     def predict(self, X):
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        X = X.to(device)
         with torch.no_grad():
             _, Y0, Y1 = self(X)
         return Y1 - Y0

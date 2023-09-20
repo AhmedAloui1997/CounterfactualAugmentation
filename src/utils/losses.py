@@ -31,7 +31,9 @@ class CFRLoss(_Loss):
     
     def forward(self, prediction1: torch.Tensor, prediction0: torch.Tensor, target1: torch.Tensor, target0: torch.Tensor,
                 Treatment: torch.Tensor, phi_output: torch.Tensor) -> torch.Tensor:
-        Treatment = torch.tensor(Treatment, dtype=torch.float32)
+        #Treatment = torch.tensor(Treatment, dtype=torch.float32)
+        Treatment = Treatment.clone().detach()
+        Treatment = Treatment.float()
         w1 = 1.0/(2*torch.mean(Treatment)) 
         w0 = 1.0/(2*(1-torch.mean(Treatment)))
         mse = MSELoss()
