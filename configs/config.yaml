@@ -1,5 +1,5 @@
 # the possible dataset names are: ihdp, news, twins, linear, nonlinear
-dataset_name: "news"
+dataset_name: "twins"
 
 # similarity measure: contrastive, euclidean_distance, propensity_scores
 similarity_measure: "contrastive"
@@ -11,10 +11,10 @@ contrastive_trained: 1
 local_regressor: "gp" #{News: gp}
 
 # Gaussian Process Kernel options: RBF, Matern, RationalQuadratic, ExpSineSquared, DotProduct
-gp_kernel: "DotProduct" #{News: DotProduct}
+gp_kernel: "RBF" #{News: DotProduct}
 
 # causal inference model options: bart, causal_forest, slearner, tlearner, cfrnet
-model_name: "tlearner"
+model_name: "causal_forest"
 
 
 # paramaters for cfrnet 
@@ -25,7 +25,7 @@ cfrnet_params:
   batch: 128 # batch size for training the model {News: 128,IHDP: 128}
   rep_dim: 800 # dimension of the representation {News: 800,IHDP: 128}
   hyp_dim: 400 # dimension of the hypothesis {News: 400,IHDP: 64}
-  alpha: 3.0 # this is the balancing term between the representations of the different treatment groups {News: 3.0,IHDP: 3.0}
+  alpha: 0.0 # this is the balancing term between the representations of the different treatment groups {News: 3.0,IHDP: 3.0}
   metric: 'MMD' # this is the metric used for the balancing term it can be 'W1' (this is the default Wassertein distance in shalit et al paper),'W2' or 'MMD'
 
 
@@ -45,8 +45,8 @@ slearner_params:
   batch: 128 # batch size for training the model
   hyp_dim: 512 # dimension of the representation
 
-  
+
 # when distance is set to 0 it means that the model will be trained using only the original dataset
 params:
-  num_neighbors: 10      # {News: 10}                 
-  distance_threshold: 0.012 #0.018 # {News: 0.010 - 0.018}
+  num_neighbors: 5   # {News: 10}                 
+  distance_threshold: 0.1 # 95 #05 #0.018 # {News: 0.010 - 0.018}

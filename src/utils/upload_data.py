@@ -24,6 +24,9 @@ def upload_ihdp(dir):
     ihdp_y0 = torch.zeros_like(ihdp_y)
     ihdp_y0[ihdp_t==1] = ihdp_ycf[ihdp_t==1]
     ihdp_y0[ihdp_t==0] = ihdp_y[ihdp_t==0]
+
+    # print all shapes
+
     return ihdp_X,ihdp_t,ihdp_y,ihdp_y0,ihdp_y1,ihdp_mu0,ihdp_mu1
 
 
@@ -32,7 +35,8 @@ def logistic(z):
     return 1 / (1 + np.exp(-z))
     
 # upload the twins data
-def upload_twins(data_folder, device):
+def upload_twins(data_folder):
+
     # Read CSVs
     twins_X_path = f'{data_folder}/twins/twin_pairs_X_3years_samesex.csv'
     twins_T_path = f'{data_folder}/twins/twin_pairs_T_3years_samesex.csv'
@@ -47,32 +51,69 @@ def upload_twins(data_folder, device):
     twins_X = twins_X.drop(col, axis=1)
     twins_T = twins_T.drop('Unnamed: 0', axis=1)
     twins_Y = twins_Y.drop('Unnamed: 0', axis=1)
+    #print(twins_X.shape, twins_T.shape, twins_Y.shape)
     dataframe = pd.concat([twins_X, twins_T, twins_Y], axis=1)
     dataframe = dataframe.drop(['Unnamed: 0', 'Unnamed: 0.1'], axis=1)
     dataframe = dataframe.dropna(axis=0, how='any')
     dataframe = dataframe.reset_index(drop=True)
+    one_third_len = len(dataframe) // 3
+
+
+    twins_X_col_names = [col for col in twins_X.columns if col not in ['Unnamed: 0', 'Unnamed: 0.1']]
+    twins_T_col_names = [col for col in twins_T.columns if col not in ['Unnamed: 0', 'Unnamed: 0.1']]
+    twins_Y_col_names = [col for col in twins_Y.columns if col not in ['Unnamed: 0', 'Unnamed: 0.1']]
+
+    # Extracting columns from cleaned dataframe
+    twins_X = dataframe[twins_X_col_names]
+    twins_X = twins_X.iloc[:one_third_len]
+    twins_T = dataframe[twins_T_col_names]
+    twins_Y = dataframe[twins_Y_col_names]
 
     # Generate potential outcomes
-    noise = np.random.normal(0, 0.1, len(dataframe))
-    random_coeffs = np.random.rand(twins_X.shape[1])
-    y0 = np.dot(twins_X.values, random_coeffs) + noise  # Linear combination of features for y0
-    y1 = np.sin(np.dot(twins_X.values, random_coeffs)) + np.sqrt(np.sum(twins_X.values**2, axis=1)) + noise  # Non-linear combination for y1
-
+    noise = np.random.normal(0, 1.0, len(twins_X))
+    random_coeffs = np.random.rand(twins_X.shape[1])/1e3
+    y0 = np.dot(twins_X.values, random_coeffs) + noise 
+    # Linear combination of features for y0
+    y1 = np.exp(np.dot(twins_X.values, random_coeffs)) + noise  # Non-linear combination for y1
+    # print the shapes of y1 an y0
     mu0 = np.dot(twins_X.values, random_coeffs)
-    mu1 = np.sin(np.dot(twins_X.values, random_coeffs)) + np.sqrt(np.sum(twins_X.values**2, axis=1))
+    mu1 = np.exp(np.dot(twins_X.values, random_coeffs)) 
     # Determine the factual and counterfactual based on the treatment
     #treatment = np.random.binomial(1, 0.7, size=len(dataframe))
     treatment_probs = logistic(np.dot(twins_X, random_coeffs))
-    treatment = np.random.binomial(1, treatment_probs, size=len(dataframe))
+    # Determine the number of samples that should receive treatment
+    percentage_receiving_treatment = 0.7  # adjust as needed
+    num_treatment = int(len(twins_X) * percentage_receiving_treatment)
+
+    # Sort indices by treatment probabilities
+    sorted_indices = np.argsort(treatment_probs)
+
+    # Assign treatment to the top p% of samples
+    treatment = np.zeros(len(twins_X), dtype=np.int)
+    treatment[sorted_indices[-num_treatment:]] = 1 
+    #treatment = np.random.binomial(1, treatment_probs, size=len(twins_X))
     y_factual = np.where(treatment == 1, y1, y0)
     #y_cfactual = np.where(treatment == 1, y0, y1)
 
     # Convert to PyTorch tensors
-    data_x_tensor = torch.tensor(twins_X.values, dtype=torch.float32, device=device)
-    treatment_tensor = torch.tensor(treatment, dtype=torch.float32, device=device).reshape(-1)
-    y_factual_tensor = torch.tensor(y_factual, dtype=torch.float32, device=device).reshape(-1)
-    y0_tensor = torch.tensor(y0, dtype=torch.float32, device=device)
-    y1_tensor = torch.tensor(y1, dtype=torch.float32, device=device)
+    data_x_tensor = torch.tensor(twins_X.values, dtype=torch.float32)
+    treatment_tensor = torch.tensor(treatment, dtype=torch.float32).reshape(-1)
+    y_factual_tensor = torch.tensor(y_factual, dtype=torch.float32).reshape(-1)
+    y0_tensor = torch.tensor(y0, dtype=torch.float32)
+    y1_tensor = torch.tensor(y1, dtype=torch.float32)
+    mu0 = torch.tensor(mu0, dtype=torch.float32)
+    mu1 = torch.tensor(mu1, dtype=torch.float32)
+
+    #print all the means
+    #print("THe mean of x is: ", torch.mean(data_x_tensor))
+    #print("The mean of the treatment is: ", torch.mean(treatment_tensor))
+    #print("The mean of the factual outcome is: ", torch.mean(y_factual_tensor))
+    #print("The mean of the potential outcome under t=0 is: ", torch.mean(y0_tensor))
+    #print("The mean of the potential outcome under t=1 is: ", torch.mean(y1_tensor))
+    #print("The mean of the mu0 is: ", torch.mean(mu0))
+    #print("The mean of the mu1 is: ", torch.mean(mu1))
+    # print all the shapes
+
 
     return data_x_tensor, treatment_tensor, y_factual_tensor, y0_tensor, y1_tensor,mu0,mu1
 
@@ -138,7 +179,7 @@ def load_data(dataset_name):
     elif dataset_name == "linear":
         return generate_linear()
     elif dataset_name == "twins":
-        return upload_twins('src/data/twins')
+        return upload_twins('src/data')
     elif dataset_name == "news":
         return upload_news('src/data/news/topic_doc_mean_n5000_k3477_seed_2.csv.x', 'src/data/news/topic_doc_mean_n5000_k3477_seed_2.csv.y')
     else:

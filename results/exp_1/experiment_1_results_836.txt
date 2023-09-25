@@ -1,0 +1,4 @@
+Average e_pehe: 3.2921576499938965
+Standard Deviation of e_pehe: 0.08695489913225174
+Average e_ate: 1.3911476135253906
+Standard Deviation of e_ate: 0.1295396238565445

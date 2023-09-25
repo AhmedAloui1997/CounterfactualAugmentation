@@ -30,4 +30,4 @@ def perf_epehe_e_ate(mu_0,mu_1,ite_est):
 
     e_pehe = torch.sqrt(torch.mean((mu_1-mu_0-ite_est)**2))
     e_ate = torch.abs(torch.mean(mu_1-mu_0) - torch.mean(ite_est))
-    return e_pehe,e_ate
+    return {'e_pehe': e_pehe, 'e_ate': e_ate}

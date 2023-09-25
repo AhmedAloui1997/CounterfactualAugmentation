@@ -9,7 +9,7 @@ class SLearner(nn.Module):
         super(SLearner, self).__init__()
 
         func = [
-            nn.Linear(input_dim + 1, hyp_dim),  # +1 for treatment
+            nn.Linear(input_dim , hyp_dim),  
             nn.ELU(),
             nn.Linear(hyp_dim, hyp_dim),
             nn.ELU(),
@@ -18,7 +18,7 @@ class SLearner(nn.Module):
         self.func = nn.Sequential(*func)
 
     def forward(self, X, t):
-        in_ = torch.cat((X, t.unsqueeze(-1)), dim=1)  # Ensuring t is a column tensor
+        in_ = torch.cat((X, t), dim=1)  # Ensuring t is a column tensor
         Y = self.func(in_)
         return Y
 
@@ -36,7 +36,7 @@ class SLearner(nn.Module):
         for _ in tqdm_epoch:
             for tr in loader:
                 tr = tr.to(device)
-                train_t = tr[:, dim].unsqueeze(-1)
+                train_t = tr[:, dim:dim+1]
                 train_X = tr[:, 0:dim]
                 train_y = tr[:, dim + 1:dim + 2]
                 y_hat = self(train_X, train_t)
