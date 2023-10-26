@@ -74,11 +74,11 @@ model_name: "causal_forest"
 
 We use variaous synthetic and semi-synthetic datasets to test our proposed approach:
 
-- IHDP: - Fill in a short description with links
-- News: - Fill in a short description with links
-- Twins: - Fill in a short description with links
-- Linear: - Fill in a short description with links
-- Non Linear: - Fill in a short description with links
+- IHDP
+- News
+- Twins 
+- Linear synthetic dataset
+- Non Linear synthetic dataset
 
 
 
